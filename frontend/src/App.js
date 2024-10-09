@@ -1,15 +1,21 @@
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes} from 'react-router-dom';
+import Navbar from './components/Navbar';
+import ReviewMap from './components/Map';
 import Reviews from './components/Reviews';
-import MyNavbar from './components/Navbar';
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <MyNavbar />
-      <h1>Niche Item Reviews</h1>
-      <Reviews />
-    </div>
+    <Router>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<ReviewMap />} />
+        <Route path="/reviews" element={<Reviews />} />
+      </Routes>
+    </Router>
   );
-}
+};
 
 export default App;
+
+

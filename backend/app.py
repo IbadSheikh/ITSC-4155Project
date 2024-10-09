@@ -14,8 +14,8 @@ def serve():
 @app.route('/api/reviews', methods=['GET'])
 def get_reviews():
     reviews = [
-        {'id': 1, 'item': 'Water Fountain', 'review': 'Clean and refreshing!'},
-        {'id': 2, 'item': 'Vending Machine', 'review': 'Out of snacks.'}
+        {'id': 1, 'item': 'Water Fountain', 'review': 'Cold and Crisp!', 'lat': 35.3071, 'lng': -80.7357},
+        {'id': 2, 'item': 'Vending Machine', 'review': 'Never has honey buns..', 'lat': 35.3076, 'lng': -80.7354}
     ]
     return jsonify(reviews)
 
