@@ -23,8 +23,6 @@ applications:
           commands:
             - pip install -r requirements.txt
         build:
-          commands:
-            - python manage.py collectstatic --noinput
       artifacts:
         baseDirectory: .
         files:

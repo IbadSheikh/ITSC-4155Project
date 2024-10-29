@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import Review from './Review';
 
 const Reviews = () => {
-  const [reviews, setReviews] = useState([]);  // Ensure reviews is initialized as an empty array
+  const [reviews, setReviews] = useState([]); // Initialize as an empty array
 
   useEffect(() => {
     fetch('/api/reviews')
@@ -12,10 +13,8 @@ const Reviews = () => {
 
   return (
     <ul>
-      {reviews && reviews.map(review => (   // Add a safety check for 'reviews'
-        <li key={review.id}>
-          {review.item}: {review.review}
-        </li>
+      {reviews && reviews.map(review => (
+        <Review key={review.id} item={review.item} username={review.username} rating={review.rating} description={review.description} />
       ))}
     </ul>
   );
