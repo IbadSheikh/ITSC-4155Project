@@ -23,7 +23,7 @@ const ReviewMap = () => {
       {reviews.map(review => (
         <Marker key={review.id} position={[review.lat, review.lng]}>
           <Popup>
-            {review.item}: {review.review}
+            {review.item}: {review.rating}/5 stars
           </Popup>
         </Marker>
       ))}
