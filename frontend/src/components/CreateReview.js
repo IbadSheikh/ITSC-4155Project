@@ -3,22 +3,34 @@ import { Form, Button, Alert } from 'react-bootstrap';
 
 const CreateReview = () => {
   const [item, setItem] = useState('');
-  const [username, setUsername] = useState('');
   const [rating, setRating] = useState(1);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
+  console.log('userId:', userId);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
 
+    if (!userId) {
+      setErrorMessage('User ID is required. Please log in.');
+      return;
+    }
+
+    if (rating < 1 || rating > 5) {
+      setErrorMessage('Rating must be between 1 and 5.');
+      return;
+    }
+
     const reviewData = {
+      user_id: userId,
       item,
-      username,
-      rating,
+      rating: Number(rating),
       description,
       location,
     };
@@ -33,11 +45,9 @@ const CreateReview = () => {
       });
 
       if (response.ok) {
-        const newReview = await response.json();
         setSuccessMessage('Review added successfully!');
         // Clear the form fields
         setItem('');
-        setUsername('');
         setRating(1);
         setDescription('');
         setLocation('');
@@ -63,16 +73,6 @@ const CreateReview = () => {
             type="text"
             value={item}
             onChange={(e) => setItem(e.target.value)}
-            required
-          />
-        </Form.Group>
-
-        <Form.Group controlId="formUsername">
-          <Form.Label>Username</Form.Label>
-          <Form.Control
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
             required
           />
         </Form.Group>
