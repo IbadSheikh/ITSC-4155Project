@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { handleLogin } from '../services/authService';
-import { Link } from 'react-router-dom'; // Import Link from react-router-dom
+import { Link, useNavigate } from 'react-router-dom'; // Import Link from react-router-dom
 import { Container, Form, Button, Alert } from 'react-bootstrap'; // Import Bootstrap components
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate(); 
 
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
       await handleLogin({ username, password });
-      onLogin(); // Call the onLogin prop to update the parent component's state
+      onLogin();
+      navigate('/');
     } catch (error) {
       setErrorMessage(error.message);
     }
