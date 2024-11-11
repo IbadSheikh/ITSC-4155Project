@@ -7,6 +7,8 @@ from flask_cors import CORS
 import jwt
 import datetime
 from geopy.geocoders import Nominatim
+import ssl
+import certifi
 
 load_dotenv()
 
@@ -104,7 +106,9 @@ def add_review():
     lat, lng = None, None
     print(address)
     if address:
-        geolocator = Nominatim(user_agent="RateAnythingApp")
+        geolocator = Nominatim(user_agent="RateAnythingApp",
+        ssl_context=ssl.create_default_context(cafile=certifi.where())
+        )
         try:
             location = geolocator.geocode(address)
             if location:
