@@ -89,7 +89,6 @@ def login_user():
     else:
         return jsonify({'error': 'Invalid username or password'}), 401
 
-# Add a review (requires user_id from login)
 @app.route('/api/reviews', methods=['POST'])
 def add_review():
     data = request.get_json()
@@ -97,29 +96,16 @@ def add_review():
     item = data['item']
     rating = data['rating']
     description = data['description']
-    address = data.get('location')
+    lat = data.get('lat')
+    lng = data.get('lng')
 
+    # Check if user_id is provided
     if not user_id:
         return jsonify({'error': 'User ID is required'}), 400
 
-    # Geocode the address if provided
-    lat, lng = None, None
-    print(address)
-    if address:
-        geolocator = Nominatim(user_agent="RateAnythingApp",
-        ssl_context=ssl.create_default_context(cafile=certifi.where())
-        )
-        try:
-            location = geolocator.geocode(address)
-            if location:
-                lat, lng = location.latitude, location.longitude
-            else:
-                return jsonify({'error': 'Invalid address provided'}), 400
-        except Exception as e:
-            print(f"Geocoding error: {e}")
-            return jsonify({'error': 'Failed to retrieve location data.'}), 500
-    else:
-        return jsonify({'error': 'Address is required to get coordinates'}), 400
+    # Check if lat and lng are provided
+    if lat is None or lng is None:
+        return jsonify({'error': 'Coordinates (lat, lng) are required'}), 400
 
     connection = get_db_connection()
     if connection is None:

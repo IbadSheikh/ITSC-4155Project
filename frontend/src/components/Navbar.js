@@ -12,9 +12,6 @@ const MyNavbar = ({ isLoggedIn, onLogout }) => {
           <Nav className="me-auto">
             <Nav.Link as={Link} to="/">Home</Nav.Link>  {/* Use Link for navigation */}
             <Nav.Link as={Link} to="/reviews">Reviews</Nav.Link>  {/* Use Link for navigation */}
-            {isLoggedIn && (  // Check if the user is logged in
-              <Nav.Link as={Link} to="/create-review">Create Review</Nav.Link>
-            )}
             {isLoggedIn ? (  // Check if the user is logged in
               <Nav.Link as="span" onClick={onLogout}>Logout</Nav.Link> 
             ) : (

@@ -1,38 +1,46 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
 
-const CreateReview = () => {
+const CreateReview = ({ location, onSuccess, onCancel }) => {
   const [item, setItem] = useState('');
   const [rating, setRating] = useState(1);
   const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
-  console.log('userId:', userId);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
 
+    // Check if user is logged in
     if (!userId) {
       setErrorMessage('User ID is required. Please log in.');
       return;
     }
 
-    if (rating < 1 || rating > 5) {
-      setErrorMessage('Rating must be between 1 and 5.');
+    // Ensure location is valid (lat & lng)
+    if (!location || !location.lat || !location.lng) {
+      setErrorMessage('Please click on the map to select a location.');
       return;
     }
 
+    // Ensure all form fields are filled
+    if (!item || !rating || !description) {
+      setErrorMessage('Please fill all fields before submitting.');
+      return;
+    }
+
+    // Construct the review data to send
     const reviewData = {
       user_id: userId,
       item,
       rating: Number(rating),
       description,
-      location,
+      lat: location.lat,  // Coordinates from the clicked location on the map
+      lng: location.lng,  // Coordinates from the clicked location on the map
     };
 
     try {
@@ -46,11 +54,10 @@ const CreateReview = () => {
 
       if (response.ok) {
         setSuccessMessage('Review added successfully!');
-        // Clear the form fields
         setItem('');
         setRating(1);
         setDescription('');
-        setLocation('');
+        onSuccess();  // Calls the onSuccess callback passed as prop
       } else {
         const errorData = await response.json();
         setErrorMessage(`Error: ${errorData.error}`);
@@ -63,9 +70,9 @@ const CreateReview = () => {
 
   return (
     <div className="container mt-4">
-      <h2>Create a Review</h2>
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
+
       <Form onSubmit={handleSubmit}>
         <Form.Group controlId="formItem">
           <Form.Label>Item</Form.Label>
@@ -100,21 +107,13 @@ const CreateReview = () => {
           />
         </Form.Group>
 
-        <Form.Group controlId="formLocation">
-          <Form.Label>Location</Form.Label>
-          <Form.Control
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="Enter an address or location"
-            required
-          />
-        </Form.Group>
-
         <Button variant="primary" type="submit">
           Submit Review
         </Button>
       </Form>
+      <Button variant="secondary" onClick={onCancel} className="mt-2">
+        Cancel
+      </Button>
     </div>
   );
 };
