@@ -3,6 +3,12 @@ import { Navbar, Nav, Container } from 'react-bootstrap';
 import { Link } from 'react-router-dom';  // Import Link for client-side routing
 
 const MyNavbar = ({ isLoggedIn, onLogout }) => {
+
+  const handleLogout = () => {
+    localStorage.removeItem('userId');
+    onLogout();
+  }
+
   return (
     <Navbar bg="dark" variant="dark" expand="lg">
       <Container>
@@ -13,7 +19,7 @@ const MyNavbar = ({ isLoggedIn, onLogout }) => {
             <Nav.Link as={Link} to="/">Home</Nav.Link>  {/* Use Link for navigation */}
             <Nav.Link as={Link} to="/reviews">Reviews</Nav.Link>  {/* Use Link for navigation */}
             {isLoggedIn ? (  // Check if the user is logged in
-              <Nav.Link as="span" onClick={onLogout}>Logout</Nav.Link> 
+              <Nav.Link as="span" onClick={handleLogout}>Logout</Nav.Link> 
             ) : (
               <Nav.Link as={Link} to="/login">Login</Nav.Link>
             )}

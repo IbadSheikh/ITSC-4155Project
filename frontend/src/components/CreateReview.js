@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 const CreateReview = ({ location, onSuccess}) => {
+  const navigate = useNavigate();
   const [item, setItem] = useState('');
   const [rating, setRating] = useState(1);
   const [description, setDescription] = useState('');
@@ -18,7 +20,7 @@ const CreateReview = ({ location, onSuccess}) => {
     // Redirect to sign-in if not logged in
     if (!userId) {
       setErrorMessage('Please sign in to submit a review.');
-      window.location.href = '/login';
+      navigate('/login');
       return;
     }
 
