@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
 
-const CreateReview = ({ location, onSuccess, onCancel }) => {
+const CreateReview = ({ location, onSuccess}) => {
   const [item, setItem] = useState('');
   const [rating, setRating] = useState(1);
   const [description, setDescription] = useState('');
@@ -15,32 +15,20 @@ const CreateReview = ({ location, onSuccess, onCancel }) => {
     setErrorMessage('');
     setSuccessMessage('');
 
-    // Check if user is logged in
+    // Redirect to sign-in if not logged in
     if (!userId) {
-      setErrorMessage('User ID is required. Please log in.');
+      setErrorMessage('Please sign in to submit a review.');
+      window.location.href = '/login';
       return;
     }
 
-    // Ensure location is valid (lat & lng)
-    if (!location || !location.lat || !location.lng) {
-      setErrorMessage('Please click on the map to select a location.');
-      return;
-    }
-
-    // Ensure all form fields are filled
-    if (!item || !rating || !description) {
-      setErrorMessage('Please fill all fields before submitting.');
-      return;
-    }
-
-    // Construct the review data to send
     const reviewData = {
       user_id: userId,
       item,
       rating: Number(rating),
       description,
-      lat: location.lat,  // Coordinates from the clicked location on the map
-      lng: location.lng,  // Coordinates from the clicked location on the map
+      lat: location?.lat,
+      lng: location?.lng,
     };
 
     try {
@@ -57,7 +45,7 @@ const CreateReview = ({ location, onSuccess, onCancel }) => {
         setItem('');
         setRating(1);
         setDescription('');
-        onSuccess();  // Calls the onSuccess callback passed as prop
+        onSuccess();
       } else {
         const errorData = await response.json();
         setErrorMessage(`Error: ${errorData.error}`);
@@ -72,7 +60,6 @@ const CreateReview = ({ location, onSuccess, onCancel }) => {
     <div className="container mt-4">
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
-
       <Form onSubmit={handleSubmit}>
         <Form.Group controlId="formItem">
           <Form.Label>Item</Form.Label>
@@ -111,9 +98,6 @@ const CreateReview = ({ location, onSuccess, onCancel }) => {
           Submit Review
         </Button>
       </Form>
-      <Button variant="secondary" onClick={onCancel} className="mt-2">
-        Cancel
-      </Button>
     </div>
   );
 };
