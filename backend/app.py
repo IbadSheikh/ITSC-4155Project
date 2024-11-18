@@ -137,14 +137,25 @@ def add_review():
 # Get all reviews
 @app.route('/api/reviews', methods=['GET'])
 def get_reviews():
+    rating = request.args.get('rating', None)  # Get the rating filter if it exists
+    query = """ 
+        SELECT reviews.id, reviews.item, reviews.rating, reviews.description, reviews.lat, reviews.lng, users.username 
+        FROM reviews 
+        JOIN users ON reviews.user_id = users.id 
+    """
+    
+    # Apply filter if rating is provided
+    if rating:
+        query += " WHERE reviews.rating = %s"
+    
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     
-    cursor.execute(""" 
-    SELECT reviews.id, reviews.item, reviews.rating, reviews.description, reviews.lat, reviews.lng, users.username 
-    FROM reviews 
-    JOIN users ON reviews.user_id = users.id 
-    """)
+    if rating:
+        cursor.execute(query, (rating,))
+    else:
+        cursor.execute(query)
+    
     reviews = cursor.fetchall()
     
     cursor.close()
