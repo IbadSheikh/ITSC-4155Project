@@ -8,7 +8,6 @@ import jwt
 import datetime
 from geopy.geocoders import Nominatim
 import ssl
-import certifi
 
 load_dotenv()
 
