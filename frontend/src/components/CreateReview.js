@@ -63,15 +63,22 @@ const CreateReview = ({ location, onSuccess}) => {
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
       <Form onSubmit={handleSubmit}>
-        <Form.Group controlId="formItem">
-          <Form.Label>Item</Form.Label>
-          <Form.Control
-            type="text"
-            value={item}
-            onChange={(e) => setItem(e.target.value)}
-            required
-          />
-        </Form.Group>
+      <Form.Group controlId="formItem">
+        <Form.Label>Item</Form.Label>
+        <Form.Select
+          value={item}
+          onChange={(e) => setItem(e.target.value)}
+          required
+        >
+          <option value="" disabled>
+            Select an item
+          </option>
+          <option value="Water Fountain">Water Fountain</option>
+          <option value="Vending Machine">Vending Machine</option>
+          <option value="Bench">Bench</option>
+          <option value="Tree">ATM</option>
+        </Form.Select>
+      </Form.Group>
 
         <Form.Group controlId="formRating">
           <Form.Label>Rating</Form.Label>
