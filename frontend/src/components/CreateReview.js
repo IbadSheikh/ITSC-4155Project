@@ -1,29 +1,26 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
-const CreateReview = () => {
+const CreateReview = ({ location, onSuccess}) => {
+  const navigate = useNavigate();
   const [item, setItem] = useState('');
   const [rating, setRating] = useState(1);
   const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
-  console.log('userId:', userId);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
 
+    // Redirect to sign-in if not logged in
     if (!userId) {
-      setErrorMessage('User ID is required. Please log in.');
-      return;
-    }
-
-    if (rating < 1 || rating > 5) {
-      setErrorMessage('Rating must be between 1 and 5.');
+      setErrorMessage('Please sign in to submit a review.');
+      navigate('/login');
       return;
     }
 
@@ -32,7 +29,8 @@ const CreateReview = () => {
       item,
       rating: Number(rating),
       description,
-      location,
+      lat: location?.lat,
+      lng: location?.lng,
     };
 
     try {
@@ -46,11 +44,10 @@ const CreateReview = () => {
 
       if (response.ok) {
         setSuccessMessage('Review added successfully!');
-        // Clear the form fields
         setItem('');
         setRating(1);
         setDescription('');
-        setLocation('');
+        onSuccess();
       } else {
         const errorData = await response.json();
         setErrorMessage(`Error: ${errorData.error}`);
@@ -63,19 +60,25 @@ const CreateReview = () => {
 
   return (
     <div className="container mt-4">
-      <h2>Create a Review</h2>
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
       <Form onSubmit={handleSubmit}>
-        <Form.Group controlId="formItem">
-          <Form.Label>Item</Form.Label>
-          <Form.Control
-            type="text"
-            value={item}
-            onChange={(e) => setItem(e.target.value)}
-            required
-          />
-        </Form.Group>
+      <Form.Group controlId="formItem">
+        <Form.Label>Item</Form.Label>
+        <Form.Select
+          value={item}
+          onChange={(e) => setItem(e.target.value)}
+          required
+        >
+          <option value="" disabled>
+            Select an item
+          </option>
+          <option value="Water Fountain">Water Fountain</option>
+          <option value="Vending Machine">Vending Machine</option>
+          <option value="Bench">Bench</option>
+          <option value="Tree">ATM</option>
+        </Form.Select>
+      </Form.Group>
 
         <Form.Group controlId="formRating">
           <Form.Label>Rating</Form.Label>
@@ -96,17 +99,6 @@ const CreateReview = () => {
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            required
-          />
-        </Form.Group>
-
-        <Form.Group controlId="formLocation">
-          <Form.Label>Location</Form.Label>
-          <Form.Control
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="Enter an address or location"
             required
           />
         </Form.Group>
