@@ -5,11 +5,12 @@ import ReviewMap from './components/Map';
 import Reviews from './components/Reviews';
 import CreateReview from './components/CreateReview';
 import Login from './components/Login';
-import Signup from './components/Signup'; // Import the Signup component
+import Signup from './components/Signup';
 import { handleLogout, isLoggedIn } from './services/authService';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(isLoggedIn());
+  const [ratingFilter, setRatingFilter] = useState(0); // State for the selected rating filter
 
   const logoutHandler = () => {
     handleLogout();
@@ -24,16 +25,22 @@ const App = () => {
     <Router>
       <Navbar isLoggedIn={isAuthenticated} onLogout={logoutHandler} />
       <Routes>
-        <Route path="/" element={<ReviewMap />} />
+        <Route 
+          path="/" 
+          element={<ReviewMap ratingFilter={ratingFilter} setRatingFilter={setRatingFilter} />} // Pass filter state and updater
+        />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/create-review" element={<CreateReview />} />
         <Route path="/login" element={<Login onLogin={loginHandler} />} />
-        <Route path="/signup" element={<Signup />} /> {/* Add this line for signup */}
+        <Route path="/signup" element={<Signup />} />
       </Routes>
     </Router>
   );
 };
 
 export default App;
+
+
+
 
 
