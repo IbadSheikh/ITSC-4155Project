@@ -1,43 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import CreateReview from './CreateReview';
 
 const ReviewMap = ({ ratingFilter, setRatingFilter }) => {
   const [reviews, setReviews] = useState([]);
-  const [newMarkerPosition, setNewMarkerPosition] = useState(null);
   const [error, setError] = useState('');
 
-  const defaultIcon = L.icon({
-    iconUrl: 'https://unpkg.com/leaflet/dist/images/marker-icon.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-  });
-
   const customIcon = L.icon({
-    iconUrl: '/images/water-fountain.jpg',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
+    iconUrl: '/images/water-fountain.jpg', // Path to the image
+    iconSize: [25, 41], // Size of the icon
+    iconAnchor: [12, 41], // Point of the icon which will correspond to marker's location
+    popupAnchor: [1, -34], // Point from which the popup should open relative to the iconAnchor
   });
-
-  const fetchReviews = async () => {
-    try {
-      const response = await fetch('/api/reviews');
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
-      setReviews(data);
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
-      setError('Error fetching reviews. Please try again later.');
-    }
-  };
 
   useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch('/api/reviews');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        setReviews(data);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        setError('Error fetching reviews. Please try again later.');
+      }
+    };
+
     fetchReviews();
   }, []);
+
+  // Filter reviews based on the selected rating
+  const filteredReviews = reviews.filter(review => {
+    return ratingFilter === 0 || review.rating === ratingFilter;
+  });
 
   return (
     <div>
@@ -101,8 +99,8 @@ const ReviewMap = ({ ratingFilter, setRatingFilter }) => {
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {reviews.map(review => (
-          review.lat && review.lng && ( // Only render marker if lat and lng are valid
+        {filteredReviews.map(review => (
+          review.lat && review.lng && (
             <Marker
               key={review.id}
               position={[review.lat, review.lng]}
@@ -117,23 +115,13 @@ const ReviewMap = ({ ratingFilter, setRatingFilter }) => {
             </Marker>
           )
         ))}
-
-        {newMarkerPosition && (
-          <Marker position={newMarkerPosition} icon={defaultIcon}>
-            <Popup>
-              <CreateReview
-                location={newMarkerPosition}
-                onSuccess={() => handleReviewSubmit(newMarkerPosition)}
-              />
-            </Popup>
-          </Marker>
-        )}
       </MapContainer>
     </div>
   );
 };
 
 export default ReviewMap;
+
 
 
 
