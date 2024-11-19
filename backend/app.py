@@ -6,9 +6,6 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 import jwt
 import datetime
-from geopy.geocoders import Nominatim
-import ssl
-import certifi
 
 load_dotenv()
 
