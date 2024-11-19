@@ -19,7 +19,7 @@ const MyNavbar = ({ isLoggedIn, onLogout }) => {
             <Nav.Link as={Link} to="/">Home</Nav.Link>  {/* Use Link for navigation */}
             <Nav.Link as={Link} to="/reviews">Reviews</Nav.Link>  {/* Use Link for navigation */}
             {isLoggedIn ? (  // Check if the user is logged in
-              <Nav.Link as="span" onClick={handleLogout}>Logout</Nav.Link> 
+              <Nav.Link as={Link} to="/profile">Profile</Nav.Link>
             ) : (
               <Nav.Link as={Link} to="/login">Login</Nav.Link>
             )}

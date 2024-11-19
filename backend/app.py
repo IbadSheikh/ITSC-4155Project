@@ -139,6 +139,25 @@ def get_reviews():
     
     return jsonify(reviews)
 
+# Get reviews by user
+@app.route('/api/reviews/user/<int:user_id>', methods=['GET'])
+def get_reviews_by_user(user_id):
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    
+    cursor.execute(""" 
+    SELECT reviews.id, reviews.item, reviews.rating, reviews.description, reviews.lat, reviews.lng, users.username 
+    FROM reviews 
+    JOIN users ON reviews.user_id = users.id 
+    WHERE user_id = %s
+    """, (user_id,))
+    reviews = cursor.fetchall()
+    
+    cursor.close()
+    connection.close()
+    
+    return jsonify(reviews)
+
 @app.route('/test-db', methods=['GET'])
 def test_db():
     try:
