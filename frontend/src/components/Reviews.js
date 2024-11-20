@@ -3,11 +3,13 @@ import Review from './Review';
 import { Alert } from 'react-bootstrap';
 
 const Reviews = () => {
-  const [reviews, setReviews] = useState([]); // Initialize as an empty array
+  const [reviews, setReviews] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Fetch reviews on component mount
+  const userId = localStorage.getItem('userId'); // Assuming the userId is stored in localStorage
+
+  // Fetch reviews when the component mounts
   useEffect(() => {
     const fetchReviews = async () => {
       try {
@@ -16,6 +18,8 @@ const Reviews = () => {
           throw new Error('Network response was not ok');
         }
         const data = await response.json();
+        console.log('Fetched Reviews:', data); // Log reviews
+        console.log('Logged-in userId:', userId); // Log userId from localStorage
         setReviews(data);
       } catch (error) {
         console.error('Error fetching reviews:', error);
@@ -25,30 +29,28 @@ const Reviews = () => {
 
     fetchReviews();
   }, []);
+  
 
-  // Function to handle adding a review
-  const handleAddReview = async (reviewData) => {
+  // Handle review deletion
+  const handleDelete = async (reviewId) => {
     try {
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
+      const response = await fetch(`/api/reviews/${reviewId}`, {
+        method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
+          'User-Id': userId, // Ensure userId is included in headers if required by the backend
         },
-        body: JSON.stringify(reviewData),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        setErrorMessage(`Error: ${errorData.error}`);
-        return;
+        throw new Error('Error deleting review');
       }
 
-      const newReview = await response.json();
-      setReviews((prevReviews) => [...prevReviews, newReview]); // Update state with the new review
-      setSuccessMessage('Review added successfully!'); // Display success message
+      // Remove the deleted review from the state
+      setReviews((prevReviews) => prevReviews.filter((review) => review.id !== reviewId));
+      setSuccessMessage('Review deleted successfully!');
     } catch (error) {
-      console.error('Error adding review:', error);
-      setErrorMessage('There was an error submitting the review.');
+      setErrorMessage('Unable to delete the review. Please try again later.');
+      console.error('Error deleting review:', error);
     }
   };
 
@@ -59,13 +61,15 @@ const Reviews = () => {
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
 
       <ul>
-        {reviews.map(review => (
+        {reviews.map((review) => (
           <Review
             key={review.id}
             item={review.item}
             username={review.username}
             rating={review.rating}
             description={review.description}
+            canDelete={Number(review.user_id) === Number(userId)} // Determine if the delete button should be shown
+            onDelete={() => handleDelete(review.id)} // Pass delete handler
           />
         ))}
       </ul>
