@@ -25,6 +25,30 @@ const Profile = () => {
     }
   };
 
+  // Handle delete review
+  const handleDelete = async (reviewId) => {
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Id': userId, // Include userId as required by your backend
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error deleting review');
+      }
+
+      // Update the local state to remove the deleted review
+      setReviews((prevReviews) => prevReviews.filter((review) => review.id !== reviewId));
+    } catch (err) {
+      setError(err.message || 'Unable to delete the review. Please try again later.');
+      console.error(err);
+    }
+  };
+
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('userId');
@@ -52,11 +76,13 @@ const Profile = () => {
       {reviews.length > 0 ? (
         reviews.map((review) => (
           <Review
-            key={review.id} // Use a unique key for each review
+            key={review.id}
             item={review.item}
             username={null} // Username is not displayed on the user's profile
             rating={review.rating}
             description={review.description}
+            canDelete={true} // Always true for the profile
+            onDelete={() => handleDelete(review.id)} // Pass the delete handler
           />
         ))
       ) : (
