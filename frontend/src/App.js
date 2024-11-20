@@ -35,7 +35,10 @@ const App = () => {
     <Router>
       <Navbar isLoggedIn={isAuthenticated} onLogout={logoutHandler} onFilterChange={handleFilterChange} onClearFilter={handleClearFilter} />
       <Routes>
-        <Route path="/reviews" element={<Reviews />} />
+      <Route
+          path="/reviews"
+          element={<Reviews selectedRating={selectedRating} />}
+        />
         <Route path="/login" element={<Login onLogin={loginHandler} />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} /> {/* Added from origin/main */}
@@ -45,7 +48,7 @@ const App = () => {
         <ReviewMap selectedRating={selectedRating} /> // Pass selectedRating to Map.js
     }
   />
-</Routes>
+      </Routes>
     </Router>
   );
 };
