@@ -10,6 +10,7 @@ import { handleLogout, isLoggedIn } from './services/authService';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(isLoggedIn());
+  const [selectedRating, setSelectedRating] = useState(null);
 
   const logoutHandler = () => {
     handleLogout();
@@ -20,15 +21,33 @@ const App = () => {
     setIsAuthenticated(true);
   };
 
+  const handleFilterChange = (rating) => {
+    console.log('Selected Rating in App.js:', rating);
+    setSelectedRating(rating); // Update the selected rating
+  };
+
+  const handleClearFilter = () => {
+    console.log('Filter Cleared in App.js');
+    setSelectedRating(null); // Reset the filter
+  };
+
   return (
     <Router>
-      <Navbar isLoggedIn={isAuthenticated} onLogout={logoutHandler} />
+      <Navbar isLoggedIn={isAuthenticated} onLogout={logoutHandler} onFilterChange={handleFilterChange} onClearFilter={handleClearFilter} />
       <Routes>
-        <Route path="/" element={<ReviewMap />} />
-        <Route path="/reviews" element={<Reviews />} />
+      <Route
+          path="/reviews"
+          element={<Reviews selectedRating={selectedRating} />}
+        />
         <Route path="/login" element={<Login onLogin={loginHandler} />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/profile" element={<Profile />} /> 
+        <Route path="/profile" element={<Profile />} /> {/* Added from origin/main */}
+        <Route
+        path="/"
+        element={
+        <ReviewMap selectedRating={selectedRating} /> // Pass selectedRating to Map.js
+    }
+  />
       </Routes>
     </Router>
   );

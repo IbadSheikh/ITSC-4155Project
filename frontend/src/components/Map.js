@@ -4,8 +4,9 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import CreateReview from './CreateReview';
 
-const ReviewMap = () => {
+const ReviewMap = ({ selectedRating }) => {
   const [reviews, setReviews] = useState([]);
+  const [filteredReviews, setFilteredReviews] = useState([]);
   const [newMarkerPosition, setNewMarkerPosition] = useState(null);
   const [error, setError] = useState('');
 
@@ -39,6 +40,16 @@ const ReviewMap = () => {
     fetchReviews();
   }, []);
 
+  // Filter reviews whenever the selectedRating changes
+  useEffect(() => {
+    if (selectedRating !== null) {
+      const filtered = reviews.filter((review) => review.rating === selectedRating);
+      setFilteredReviews(filtered);
+    } else {
+      setFilteredReviews(reviews); // Show all reviews if no filter is applied
+    }
+  }, [selectedRating, reviews]);
+
   const AddMarkerOnClick = () => {
     useMapEvents({
       click: (e) => {
@@ -61,7 +72,7 @@ const ReviewMap = () => {
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <AddMarkerOnClick />
 
-        {reviews.map(review => (
+        {filteredReviews.map((review) => (
           review.lat && review.lng && (
             <Marker key={review.id} position={[review.lat, review.lng]} icon={customIcon}>
               <Popup>
