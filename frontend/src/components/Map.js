@@ -17,12 +17,41 @@ const ReviewMap = ({ selectedRating }) => {
     popupAnchor: [1, -34],
   });
 
-  const customIcon = L.icon({
-    iconUrl: '/images/water-fountain.jpg',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-  });
+  // Function to return an icon based on the item type
+  const getItemIcon = (itemType) => {
+    switch (itemType) {
+      case 'Water Fountain':
+        return L.icon({
+          iconUrl: '/images/water-fountain.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+        });
+      case 'Bench':
+        return L.icon({
+          iconUrl: '/images/bench.png', // Replace with your image URL
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+        });
+      case 'Vending Machine':
+        return L.icon({
+          iconUrl: '/images/vending-machine.png', // Replace with your image URL
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+        });
+      case 'Tree':
+        return L.icon({
+          iconUrl: '/images/tree.png', // Replace with your image URL
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+        });
+      default:
+        return defaultIcon; // Default icon for unknown item types
+    }
+  };
 
   const fetchReviews = async () => {
     try {
@@ -74,7 +103,11 @@ const ReviewMap = ({ selectedRating }) => {
 
         {filteredReviews.map((review) => (
           review.lat && review.lng && (
-            <Marker key={review.id} position={[review.lat, review.lng]} icon={customIcon}>
+            <Marker
+              key={review.id}
+              position={[review.lat, review.lng]}
+              icon={getItemIcon(review.item)} // Dynamically set the icon based on item type
+            >
               <Popup>
                 <strong>{review.item}</strong><br />
                 Rated {review.rating}/5 stars<br />
