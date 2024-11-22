@@ -97,7 +97,7 @@ const ReviewMap = ({ selectedRating }) => {
   return (
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
-      <MapContainer center={[35.3074, -80.7352]} zoom={15} style={{ height: '100vh' }}>
+      <MapContainer center={[35.3074, -80.7352]} zoom={15} style={{ height: 'calc(100vh - 50px)', width: '100%' }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <AddMarkerOnClick />
 
