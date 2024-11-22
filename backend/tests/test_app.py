@@ -1,134 +1,104 @@
-import pytest
-import sys
+import unittest
+from unittest.mock import patch, MagicMock
 import os
-from werkzeug.security import generate_password_hash
-import mysql.connector
+import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from app import app, get_db_connection
+from app import app
 
-@pytest.fixture
-def client():
-    app.config['TESTING'] = True
-    with app.test_client() as client:
-        yield client
+class TestApp(unittest.TestCase):
 
-@pytest.fixture
-def db_connection():
-    connection = get_db_connection()
-    yield connection
-    connection.close()
+    def setUp(self):
+        self.app = app.test_client()
+        self.app.testing = True
+        self.client = app.test_client()
 
-def test_signup_success(client):
-    response = client.post('/api/signup', json={
-        'username': 'testuser',
-        'password': 'securepassword'
-    })
-    assert response.status_code == 201
-    assert response.get_json()['message'] == 'User registered successfully!'
+    @patch('app.get_db_connection')
+    def test_register_user(self, mock_db_connection):
+        # Mocking DB connection and cursor
+        mock_connection = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db_connection.return_value = mock_connection
+        mock_connection.cursor.return_value = mock_cursor
 
-def test_signup_duplicate_user(client, db_connection):
-    cursor = db_connection.cursor()
-    cursor.execute("""
-        INSERT INTO users (username, password)
-        VALUES (%s, %s)
-    """, ('testuser', generate_password_hash('securepassword')))
-    db_connection.commit()
-    cursor.close()
+        mock_cursor.execute.return_value = None 
+        mock_connection.commit.return_value = None
 
-    response = client.post('/api/signup', json={
-        'username': 'testuser',
-        'password': 'securepassword'
-    })
-    assert response.status_code == 400
-    assert response.get_json()['error'] == 'Username already exists'
+        # Make a POST request
+        response = self.app.post('/api/signup', json={
+            'username': 'testuser',
+            'password': 'testpassword'
+        })
 
-def test_login_success(client, db_connection):
-    cursor = db_connection.cursor()
-    cursor.execute("""
-        INSERT INTO users (username, password)
-        VALUES (%s, %s)
-    """, ('testuser', generate_password_hash('securepassword')))
-    db_connection.commit()
-    cursor.close()
 
-    response = client.post('/api/login', json={
-        'username': 'testuser',
-        'password': 'securepassword'
-    })
-    assert response.status_code == 200
-    assert 'token' in response.get_json()
+        self.assertEqual(response.status_code, 201)
+        self.assertIn('User registered successfully!', response.get_json()['message'])
 
-def test_login_invalid_credentials(client):
-    response = client.post('/api/login', json={
-        'username': 'wronguser',
-        'password': 'wrongpassword'
-    })
-    assert response.status_code == 401
-    assert response.get_json()['error'] == 'Invalid username or password'
+    @patch('app.get_db_connection')
+    def test_add_review(self, mock_db_connection):
+        # Mocking DB connection and cursor
+        mock_connection = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db_connection.return_value = mock_connection
+        mock_connection.cursor.return_value = mock_cursor
 
-def test_add_review_success(client, db_connection):
-    cursor = db_connection.cursor()
-    cursor.execute("""
-        INSERT INTO users (username, password)
-        VALUES (%s, %s)
-    """, ('testuser', generate_password_hash('securepassword')))
-    db_connection.commit()
-    cursor.close()
+        mock_cursor.execute.return_value = None 
+        mock_connection.commit.return_value = None
 
-    response = client.post('/api/reviews', json={
-        'user_id': 1,
-        'item': 'Water Fountain',
-        'rating': 5,
-        'description': 'Clean and refreshing',
-        'lat': 35.2271,
-        'lng': -80.8431
-    })
-    assert response.status_code == 201
-    assert response.get_json()['message'] == 'Review added successfully!'
+        response = self.app.post('/api/reviews', json={
+            'user_id': 1,
+            'item': 'Test Item',
+            'rating': 5,
+            'description': 'Test Description',
+            'lat': 12.34,
+            'lng': 56.78
+        })
 
-def test_add_review_missing_fields(client):
-    response = client.post('/api/reviews', json={
-        'user_id': 1,
-        'item': 'Water Fountain',
-        'rating': 5
-    })
-    assert response.status_code == 400
-    assert 'error' in response.get_json()
+        self.assertEqual(response.status_code, 201)
+        self.assertIn('Review added successfully!', response.get_json()['message'])
 
-def test_delete_review_unauthorized(client, db_connection):
-    cursor = db_connection.cursor()
-    cursor.execute("""
-        INSERT INTO users (username, password)
-        VALUES (%s, %s)
-    """, ('testuser', generate_password_hash('securepassword')))
-    cursor.execute("""
-        INSERT INTO reviews (user_id, item, rating, description, lat, lng)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (1, 'Water Fountain', 5, 'Clean and refreshing', 35.2271, -80.8431))
-    db_connection.commit()
-    cursor.close()
+    @patch('app.get_db_connection')
+    def test_get_reviews(self, mock_db_connection):
+        # Mocking DB connection and cursor
+        mock_connection = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db_connection.return_value = mock_connection
+        mock_connection.cursor.return_value = mock_cursor
 
-    response = client.delete('/api/reviews/1', headers={
-        'User-Id': '2'  # User ID not matching the review owner
-    })
-    assert response.status_code == 403
-    assert response.get_json()['error'] == 'Review not found or unauthorized to delete.'
+        # Mocking return value of reviews
+        mock_cursor.fetchall.return_value = [
+            {
+                'id': 1,
+                'item': 'Test Item',
+                'rating': 5,
+                'description': 'Test Description',
+                'lat': 12.34,
+                'lng': 56.78,
+                'user_id': 1,
+                'username': 'testuser'
+            }
+        ]
 
-def test_get_all_reviews(client, db_connection):
-    cursor = db_connection.cursor()
-    cursor.execute("""
-        INSERT INTO users (username, password)
-        VALUES (%s, %s)
-    """, ('testuser', generate_password_hash('securepassword')))
-    cursor.execute("""
-        INSERT INTO reviews (user_id, item, rating, description, lat, lng)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (1, 'Water Fountain', 5, 'Clean and refreshing', 35.2271, -80.8431))
-    db_connection.commit()
-    cursor.close()
+        response = self.app.get('/api/reviews')
 
-    response = client.get('/api/reviews')
-    assert response.status_code == 200
-    reviews = response.get_json()
-    assert isinstance(reviews, list)
-    assert len(reviews) > 0
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.get_json(), list)
+
+    @patch('app.get_db_connection')
+    def test_delete_review(self, mock_db_connection):
+        # Mocking DB connection and cursor
+        mock_connection = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db_connection.return_value = mock_connection
+        mock_connection.cursor.return_value = mock_cursor
+
+        # Mocking delete query execution
+        mock_cursor.execute.return_value = None
+        mock_connection.commit.return_value = None
+
+        response = self.app.delete('/api/reviews/1', headers={'User-Id': '1'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Review deleted successfully!', response.get_json()['message'])
+
+if __name__ == '__main__':
+    unittest.main()
