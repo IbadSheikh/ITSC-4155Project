@@ -76,7 +76,7 @@ const CreateReview = ({ location, onSuccess}) => {
           <option value="Water Fountain">Water Fountain</option>
           <option value="Vending Machine">Vending Machine</option>
           <option value="Bench">Bench</option>
-          <option value="Tree">ATM</option>
+          <option value="Tree">Tree</option>
         </Form.Select>
       </Form.Group>
 
