@@ -11,8 +11,10 @@ const ReviewMap = () => {
   const [filteredReviews, setFilteredReviews] = useState([]);
   const [newMarkerPosition, setNewMarkerPosition] = useState(null);
   const [error, setError] = useState('');
-  const mapRef = useRef(); // Ref for the map
-  const markerRefs = useRef({}); // Ref to store markers for programmatic access
+  const [userLocation, setUserLocation] = useState(null);
+  const [isReviewFocused, setIsReviewFocused] = useState(false); // State to track if the review is being focused on
+  const mapRef = useRef();
+  const markerRefs = useRef({});
 
   const selectedRating = searchParams.get('rating');
   const selectedReviewId = searchParams.get('reviewId');
@@ -21,6 +23,13 @@ const ReviewMap = () => {
     iconUrl: 'https://unpkg.com/leaflet/dist/images/marker-icon.png',
     iconSize: [25, 41],
     iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+  });
+
+  const userIcon = L.icon({
+    iconUrl: "/images/person.png",
+    iconSize: [40, 60],
+    iconAnchor: [20, 60],
     popupAnchor: [1, -34],
   });
 
@@ -84,12 +93,31 @@ const ReviewMap = () => {
     }
   }, [selectedRating, reviews]);
 
+  // Get user's current location when the component mounts
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+        }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userLocation && !isReviewFocused && mapRef.current) {
+      const map = mapRef.current;
+      map.setView([userLocation.lat, userLocation.lng], 14);
+    }
+  }, [userLocation, isReviewFocused]);
+
   useEffect(() => {
     if (selectedReviewId) {
       const review = reviews.find((r) => String(r.id) === String(selectedReviewId));
       if (review && review.lat && review.lng && mapRef.current) {
         const map = mapRef.current;
-  
+
         // Wait until the map has been rendered and the marker is added to the map
         map.once('moveend', () => {
           if (markerRefs.current[review.id]) {
@@ -97,9 +125,13 @@ const ReviewMap = () => {
             markerRefs.current[review.id].openPopup();
           }
         });
-  
-        // Set the view to the location of the review
-        map.setView([review.lat, review.lng], 16, { animate: true });
+
+        // Set the map to the review location without affecting the user's location
+        setIsReviewFocused(true); // Set review focus flag to true
+        map.flyTo([review.lat, review.lng], 16, {
+          animate: true,
+          duration: 1.5, // Set duration for smoother transition
+        });
       }
     }
   }, [selectedReviewId, reviews]);
@@ -121,13 +153,19 @@ const ReviewMap = () => {
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
       <MapContainer
-        center={[35.3074, -80.7352]}
+        center={userLocation ? [userLocation.lat, userLocation.lng] : [35.3074, -80.7352]} // Prioritize user location
         zoom={15}
         style={{ height: 'calc(100vh - 50px)', width: '100%' }}
-        ref={mapRef} // Attach the map reference
+        ref={mapRef}
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <AddMarkerOnClick />
+
+        {/* Add user location marker if available */}
+        {userLocation && !isReviewFocused && (
+          <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
+          </Marker>
+        )}
 
         {filteredReviews.map(
           (review) =>
@@ -139,13 +177,10 @@ const ReviewMap = () => {
                 icon={getItemIcon(review.item)}
                 eventHandlers={{
                   click: () => {
-                    mapRef.current.setView([review.lat, review.lng], 16, { animate: true });
-                    if (markerRefs.current[review.id]) {
-                      markerRefs.current[review.id].openPopup(); // Open the popup when clicked
-                    }
+                    mapRef.current.flyTo([review.lat, review.lng], 16, { animate: true, duration: 1.5 });
                   },
                 }}
-                ref={(el) => (markerRefs.current[review.id] = el)} // Store reference to each marker
+                ref={(el) => (markerRefs.current[review.id] = el)}
               >
                 <Popup>
                   <strong>{review.item}</strong>
@@ -176,4 +211,3 @@ const ReviewMap = () => {
 };
 
 export default ReviewMap;
-

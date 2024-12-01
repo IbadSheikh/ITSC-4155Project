@@ -7,9 +7,28 @@ const Reviews = ({ selectedRating }) => {
   const [reviews, setReviews] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [userLocation, setUserLocation] = useState(null); // Store user location
   const navigate = useNavigate(); // Hook for navigation
 
   const userId = localStorage.getItem('userId');
+
+  // Haversine formula to calculate distance between two lat/lon points in miles
+  const haversineDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 3963; // Radius of Earth in miles
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in miles
+    // round to two decimal places
+    const roundedDistance = Math.round(distance * 100) / 100;
+    return roundedDistance;
+  };
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -26,12 +45,40 @@ const Reviews = ({ selectedRating }) => {
       }
     };
 
+    // Get the user's location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+        }
+      );
+    } else {
+      setErrorMessage('Geolocation is not supported by this browser.');
+    }
+
     fetchReviews();
   }, []);
 
+  // Filter and sort reviews based on the selected rating and proximity to the user
   const filteredReviews = selectedRating
     ? reviews.filter((review) => Number(review.rating) === Number(selectedRating))
     : reviews;
+
+  // If the user's location is available, calculate and sort reviews based on distance
+  const reviewsWithDistance = userLocation
+    ? filteredReviews
+        .map((review) => {
+          const distance = haversineDistance(
+            userLocation.lat,
+            userLocation.lng,
+            review.lat,
+            review.lng
+          );
+          return { ...review, distance }; // Add distance property to the review
+        })
+        .sort((a, b) => a.distance - b.distance) // Sort by distance (ascending)
+    : filteredReviews;
 
   const handleDelete = async (reviewId) => {
     try {
@@ -71,7 +118,7 @@ const Reviews = ({ selectedRating }) => {
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
 
       <ul>
-        {filteredReviews.map((review) => (
+        {reviewsWithDistance.map((review) => (
           <Review
             key={review.id}
             item={review.item}
@@ -80,13 +127,13 @@ const Reviews = ({ selectedRating }) => {
             description={review.description}
             lat={review.lat}
             lng={review.lng}
+            distance={review.distance} // Pass the distance to the Review component
             canDelete={Number(review.user_id) === Number(userId)}
             onDelete={() => handleDelete(review.id)}
-            onNavigate={() => 
-            {
+            onNavigate={() => {
               console.log('Review ID:', review.id);
-              handleNavigate(review.id)} // Pass the query param handler
-            }
+              handleNavigate(review.id); // Pass the query param handler
+            }}
           />
         ))}
       </ul>
