@@ -33,21 +33,39 @@ const App = () => {
 
   return (
     <Router>
-      <Navbar isLoggedIn={isAuthenticated} onLogout={logoutHandler} onFilterChange={handleFilterChange} onClearFilter={handleClearFilter} />
+      <Navbar
+        isLoggedIn={isAuthenticated}
+        onLogout={logoutHandler}
+        onFilterChange={handleFilterChange}
+        onClearFilter={handleClearFilter}
+      />
       <Routes>
-      <Route
+        {/* Route for Reviews page */}
+        <Route
           path="/reviews"
           element={<Reviews selectedRating={selectedRating} />}
         />
-        <Route path="/login" element={<Login onLogin={loginHandler} />} />
+        {/* Route for Login page */}
+        <Route 
+          path="/login" 
+          element={<Login onLogin={loginHandler} />} 
+        />
+        {/* Route for Signup page */}
         <Route path="/signup" element={<Signup />} />
-        <Route path="/profile" element={<Profile />} /> {/* Added from origin/main */}
+        {/* Route for Profile page */}
+        <Route path="/profile" element={<Profile />} /> 
+        {/* Route for ReviewMap page */}
         <Route
-        path="/"
-        element={
-        <ReviewMap selectedRating={selectedRating} /> // Pass selectedRating to Map.js
-    }
-  />
+          path="/map/:reviewId"
+          element={<ReviewMap selectedRating={selectedRating} />} // Map for a specific reviewId
+        />
+        {/* Default route */}
+        <Route
+          path="/"
+          element={
+            <ReviewMap selectedRating={selectedRating} /> // Default map page without reviewId
+          }
+        />
       </Routes>
     </Router>
   );
