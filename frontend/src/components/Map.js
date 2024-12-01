@@ -12,6 +12,7 @@ const ReviewMap = () => {
   const [newMarkerPosition, setNewMarkerPosition] = useState(null);
   const [error, setError] = useState('');
   const mapRef = useRef(); // Ref for the map
+  const markerRefs = useRef({}); // Ref to store markers for programmatic access
 
   const selectedRating = searchParams.get('rating');
   const selectedReviewId = searchParams.get('reviewId');
@@ -88,7 +89,17 @@ const ReviewMap = () => {
       const review = reviews.find((r) => String(r.id) === String(selectedReviewId));
       if (review && review.lat && review.lng && mapRef.current) {
         const map = mapRef.current;
-        map.setView([review.lat, review.lng], 16, { animate: true }); // Pan and zoom to the marker
+  
+        // Wait until the map has been rendered and the marker is added to the map
+        map.once('moveend', () => {
+          if (markerRefs.current[review.id]) {
+            // Ensure the popup opens after the marker is rendered
+            markerRefs.current[review.id].openPopup();
+          }
+        });
+  
+        // Set the view to the location of the review
+        map.setView([review.lat, review.lng], 16, { animate: true });
       }
     }
   }, [selectedReviewId, reviews]);
@@ -129,10 +140,14 @@ const ReviewMap = () => {
                 eventHandlers={{
                   click: () => {
                     mapRef.current.setView([review.lat, review.lng], 16, { animate: true });
+                    if (markerRefs.current[review.id]) {
+                      markerRefs.current[review.id].openPopup(); // Open the popup when clicked
+                    }
                   },
                 }}
+                ref={(el) => (markerRefs.current[review.id] = el)} // Store reference to each marker
               >
-                <Popup autoOpen={String(review.id) === String(selectedReviewId)}>
+                <Popup>
                   <strong>{review.item}</strong>
                   <br />
                   Rated {review.rating}/5 stars
