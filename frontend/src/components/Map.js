@@ -107,7 +107,7 @@ const ReviewMap = () => {
   useEffect(() => {
     if (userLocation && mapRef.current) {
       const map = mapRef.current;
-      map.setView([userLocation.lat, userLocation.lng], 16);
+      map.setView([userLocation.lat, userLocation.lng], 12);
     }
   }, [userLocation]);
 
