@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Review from './Review';
 import { Alert } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom'; // For navigation to the map
 
 const Reviews = ({ selectedRating }) => {
   const [reviews, setReviews] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const navigate = useNavigate(); // Hook for navigation
 
   const userId = localStorage.getItem('userId');
 
@@ -27,14 +29,9 @@ const Reviews = ({ selectedRating }) => {
     fetchReviews();
   }, []);
 
-  console.log('Selected Rating in Reviews:', selectedRating);
-  console.log('All Reviews:', reviews);
-
   const filteredReviews = selectedRating
     ? reviews.filter((review) => Number(review.rating) === Number(selectedRating))
     : reviews;
-
-  console.log('Filtered Reviews:', filteredReviews);
 
   const handleDelete = async (reviewId) => {
     try {
@@ -58,6 +55,15 @@ const Reviews = ({ selectedRating }) => {
     }
   };
 
+  // Navigate to the map with the reviewId as a query parameter
+  const handleNavigate = (reviewId) => {
+    if (!reviewId) {
+      console.error("Review ID is undefined!");
+      return;
+    }
+    navigate(`/?reviewId=${reviewId}`);
+  };
+
   return (
     <div className="container mt-4">
       <h2>Reviews</h2>
@@ -72,8 +78,15 @@ const Reviews = ({ selectedRating }) => {
             username={review.username}
             rating={review.rating}
             description={review.description}
+            lat={review.lat}
+            lng={review.lng}
             canDelete={Number(review.user_id) === Number(userId)}
             onDelete={() => handleDelete(review.id)}
+            onNavigate={() => 
+            {
+              console.log('Review ID:', review.id);
+              handleNavigate(review.id)} // Pass the query param handler
+            }
           />
         ))}
       </ul>

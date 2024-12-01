@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import CreateReview from './CreateReview';
 
-const ReviewMap = ({ selectedRating }) => {
+const ReviewMap = () => {
+  const [searchParams] = useSearchParams();
   const [reviews, setReviews] = useState([]);
   const [filteredReviews, setFilteredReviews] = useState([]);
   const [newMarkerPosition, setNewMarkerPosition] = useState(null);
   const [error, setError] = useState('');
+  const mapRef = useRef(); // Ref for the map
+  const markerRefs = useRef({}); // Ref to store markers for programmatic access
+
+  const selectedRating = searchParams.get('rating');
+  const selectedReviewId = searchParams.get('reviewId');
 
   const defaultIcon = L.icon({
     iconUrl: 'https://unpkg.com/leaflet/dist/images/marker-icon.png',
@@ -17,7 +24,6 @@ const ReviewMap = ({ selectedRating }) => {
     popupAnchor: [1, -34],
   });
 
-  // Function to return an icon based on the item type
   const getItemIcon = (itemType) => {
     switch (itemType) {
       case 'Water Fountain':
@@ -29,27 +35,27 @@ const ReviewMap = ({ selectedRating }) => {
         });
       case 'Bench':
         return L.icon({
-          iconUrl: '/images/bench.png', // Replace with your image URL
+          iconUrl: '/images/bench.png',
           iconSize: [25, 41],
           iconAnchor: [12, 41],
           popupAnchor: [1, -34],
         });
       case 'Vending Machine':
         return L.icon({
-          iconUrl: '/images/vending-machine.png', // Replace with your image URL
+          iconUrl: '/images/vending-machine.png',
           iconSize: [25, 41],
           iconAnchor: [12, 41],
           popupAnchor: [1, -34],
         });
       case 'Tree':
         return L.icon({
-          iconUrl: '/images/tree.png', // Replace with your image URL
+          iconUrl: '/images/tree.png',
           iconSize: [25, 41],
           iconAnchor: [12, 41],
           popupAnchor: [1, -34],
         });
       default:
-        return defaultIcon; // Default icon for unknown item types
+        return defaultIcon;
     }
   };
 
@@ -69,21 +75,38 @@ const ReviewMap = ({ selectedRating }) => {
     fetchReviews();
   }, []);
 
-  // Filter reviews whenever the selectedRating changes
   useEffect(() => {
     if (selectedRating !== null) {
-      const filtered = reviews.filter((review) => review.rating === selectedRating);
+      const filtered = reviews.filter((review) => Number(review.rating) === Number(selectedRating));
       setFilteredReviews(filtered);
     } else {
-      setFilteredReviews(reviews); // Show all reviews if no filter is applied
+      setFilteredReviews(reviews);
     }
   }, [selectedRating, reviews]);
 
+  useEffect(() => {
+    if (selectedReviewId) {
+      const review = reviews.find((r) => String(r.id) === String(selectedReviewId));
+      if (review && review.lat && review.lng && mapRef.current) {
+        const map = mapRef.current;
+  
+        // Wait until the map has been rendered and the marker is added to the map
+        map.once('moveend', () => {
+          if (markerRefs.current[review.id]) {
+            // Ensure the popup opens after the marker is rendered
+            markerRefs.current[review.id].openPopup();
+          }
+        });
+  
+        // Set the view to the location of the review
+        map.setView([review.lat, review.lng], 16, { animate: true });
+      }
+    }
+  }, [selectedReviewId, reviews]);
+
   const AddMarkerOnClick = () => {
-    useMapEvents({
-      click: (e) => {
-        setNewMarkerPosition(e.latlng); // Set new marker position when map is clicked
-      },
+    useMap().on('click', (e) => {
+      setNewMarkerPosition(e.latlng);
     });
     return null;
   };
@@ -91,32 +114,51 @@ const ReviewMap = ({ selectedRating }) => {
   const handleReviewSubmit = async (location) => {
     console.log('Review submitted at:', location);
     await fetchReviews();
-    setNewMarkerPosition(null); // Remove the marker
+    setNewMarkerPosition(null);
   };
 
   return (
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
-      <MapContainer center={[35.3074, -80.7352]} zoom={15} style={{ height: 'calc(100vh - 50px)', width: '100%' }}>
+      <MapContainer
+        center={[35.3074, -80.7352]}
+        zoom={15}
+        style={{ height: 'calc(100vh - 50px)', width: '100%' }}
+        ref={mapRef} // Attach the map reference
+      >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <AddMarkerOnClick />
 
-        {filteredReviews.map((review) => (
-          review.lat && review.lng && (
-            <Marker
-              key={review.id}
-              position={[review.lat, review.lng]}
-              icon={getItemIcon(review.item)} // Dynamically set the icon based on item type
-            >
-              <Popup>
-                <strong>{review.item}</strong><br />
-                Rated {review.rating}/5 stars<br />
-                Reviewed by {review.username}<br />
-                <small>{review.description}</small>
-              </Popup>
-            </Marker>
-          )
-        ))}
+        {filteredReviews.map(
+          (review) =>
+            review.lat &&
+            review.lng && (
+              <Marker
+                key={review.id}
+                position={[review.lat, review.lng]}
+                icon={getItemIcon(review.item)}
+                eventHandlers={{
+                  click: () => {
+                    mapRef.current.setView([review.lat, review.lng], 16, { animate: true });
+                    if (markerRefs.current[review.id]) {
+                      markerRefs.current[review.id].openPopup(); // Open the popup when clicked
+                    }
+                  },
+                }}
+                ref={(el) => (markerRefs.current[review.id] = el)} // Store reference to each marker
+              >
+                <Popup>
+                  <strong>{review.item}</strong>
+                  <br />
+                  Rated {review.rating}/5 stars
+                  <br />
+                  Reviewed by {review.username}
+                  <br />
+                  <small>{review.description}</small>
+                </Popup>
+              </Marker>
+            )
+        )}
 
         {newMarkerPosition && (
           <Marker position={newMarkerPosition} icon={defaultIcon}>
