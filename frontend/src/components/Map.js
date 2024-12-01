@@ -11,9 +11,10 @@ const ReviewMap = () => {
   const [filteredReviews, setFilteredReviews] = useState([]);
   const [newMarkerPosition, setNewMarkerPosition] = useState(null);
   const [error, setError] = useState('');
-  const [userLocation, setUserLocation] = useState(null); // State to store the user's location
-  const mapRef = useRef(); // Ref for the map
-  const markerRefs = useRef({}); // Ref to store markers for programmatic access
+  const [userLocation, setUserLocation] = useState(null);
+  const [isReviewFocused, setIsReviewFocused] = useState(false); // State to track if the review is being focused on
+  const mapRef = useRef();
+  const markerRefs = useRef({});
 
   const selectedRating = searchParams.get('rating');
   const selectedReviewId = searchParams.get('reviewId');
@@ -105,18 +106,18 @@ const ReviewMap = () => {
   }, []);
 
   useEffect(() => {
-    if (userLocation && mapRef.current) {
+    if (userLocation && !isReviewFocused && mapRef.current) {
       const map = mapRef.current;
-      map.setView([userLocation.lat, userLocation.lng], 12);
+      map.setView([userLocation.lat, userLocation.lng], 14);
     }
-  }, [userLocation]);
+  }, [userLocation, isReviewFocused]);
 
   useEffect(() => {
     if (selectedReviewId) {
       const review = reviews.find((r) => String(r.id) === String(selectedReviewId));
       if (review && review.lat && review.lng && mapRef.current) {
         const map = mapRef.current;
-  
+
         // Wait until the map has been rendered and the marker is added to the map
         map.once('moveend', () => {
           if (markerRefs.current[review.id]) {
@@ -124,12 +125,16 @@ const ReviewMap = () => {
             markerRefs.current[review.id].openPopup();
           }
         });
-  
-        // Set the view to the location of the review
-        map.setView([review.lat, review.lng], 16, { animate: true });
+
+        // Set the map to the review location without affecting the user's location
+        setIsReviewFocused(true); // Set review focus flag to true
+        map.flyTo([review.lat, review.lng], 16, {
+          animate: true,
+          duration: 1.5, // Set duration for smoother transition
+        });
       }
     }
-  }, [selectedReviewId, reviews]);  
+  }, [selectedReviewId, reviews]);
 
   const AddMarkerOnClick = () => {
     useMap().on('click', (e) => {
@@ -148,7 +153,7 @@ const ReviewMap = () => {
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
       <MapContainer
-        center={[35.3074, -80.7352]}
+        center={userLocation ? [userLocation.lat, userLocation.lng] : [35.3074, -80.7352]} // Prioritize user location
         zoom={15}
         style={{ height: 'calc(100vh - 50px)', width: '100%' }}
         ref={mapRef}
@@ -157,7 +162,7 @@ const ReviewMap = () => {
         <AddMarkerOnClick />
 
         {/* Add user location marker if available */}
-        {userLocation && (
+        {userLocation && !isReviewFocused && (
           <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
           </Marker>
         )}
@@ -172,7 +177,7 @@ const ReviewMap = () => {
                 icon={getItemIcon(review.item)}
                 eventHandlers={{
                   click: () => {
-                    mapRef.current.setView([review.lat, review.lng], 16, { animate: true });
+                    mapRef.current.flyTo([review.lat, review.lng], 16, { animate: true, duration: 1.5 });
                   },
                 }}
                 ref={(el) => (markerRefs.current[review.id] = el)}
