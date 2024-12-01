@@ -51,9 +51,6 @@ const Reviews = ({ selectedRating }) => {
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ lat: latitude, lng: longitude });
-        },
-        (error) => {
-          setErrorMessage('Unable to fetch location. Please enable location services.');
         }
       );
     } else {

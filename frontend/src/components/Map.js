@@ -99,10 +99,6 @@ const ReviewMap = () => {
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ lat: latitude, lng: longitude });
-        },
-        (error) => {
-          console.error('Error getting user location:', error);
-          setError('Unable to retrieve your location.');
         }
       );
     }
@@ -120,10 +116,20 @@ const ReviewMap = () => {
       const review = reviews.find((r) => String(r.id) === String(selectedReviewId));
       if (review && review.lat && review.lng && mapRef.current) {
         const map = mapRef.current;
+  
+        // Wait until the map has been rendered and the marker is added to the map
+        map.once('moveend', () => {
+          if (markerRefs.current[review.id]) {
+            // Ensure the popup opens after the marker is rendered
+            markerRefs.current[review.id].openPopup();
+          }
+        });
+  
+        // Set the view to the location of the review
         map.setView([review.lat, review.lng], 16, { animate: true });
       }
     }
-  }, [selectedReviewId, reviews]);
+  }, [selectedReviewId, reviews]);  
 
   const AddMarkerOnClick = () => {
     useMap().on('click', (e) => {
