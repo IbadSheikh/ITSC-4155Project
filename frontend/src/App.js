@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ReviewMap from './components/Map';
@@ -11,6 +11,33 @@ import { handleLogout, isLoggedIn } from './services/authService';
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(isLoggedIn());
   const [selectedRating, setSelectedRating] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+
+  useEffect(() => {
+    // Check if location is stored in localStorage
+    const storedLocation = localStorage.getItem('userLocation');
+    if (storedLocation) {
+      setUserLocation(JSON.parse(storedLocation));
+    } else {
+      // Ask for location if not stored
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const location = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            };
+            setUserLocation(location);
+            localStorage.setItem('userLocation', JSON.stringify(location));
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+            // Handle errors (e.g., user denied location access)
+          }
+        );
+      }
+    }
+  }, []);
 
   const logoutHandler = () => {
     handleLogout();
@@ -57,13 +84,13 @@ const App = () => {
         {/* Route for ReviewMap page */}
         <Route
           path="/map/:reviewId"
-          element={<ReviewMap selectedRating={selectedRating} />} // Map for a specific reviewId
+          element={<ReviewMap selectedRating={selectedRating} userLocation={userLocation} />} // Pass location
         />
         {/* Default route */}
         <Route
           path="/"
           element={
-            <ReviewMap selectedRating={selectedRating} /> // Default map page without reviewId
+            <ReviewMap selectedRating={selectedRating} userLocation={userLocation} /> // Default map page
           }
         />
       </Routes>
