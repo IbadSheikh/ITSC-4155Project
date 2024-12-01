@@ -49,6 +49,15 @@ const Profile = () => {
     }
   };
 
+  // Navigate to the map with the reviewId as a query parameter
+  const handleNavigate = (reviewId) => {
+    if (!reviewId) {
+      console.error("Review ID is undefined!");
+      return;
+    }
+    navigate(`/?reviewId=${reviewId}`);  // This will navigate to the map page
+  };
+
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('userId');
@@ -83,6 +92,7 @@ const Profile = () => {
             description={review.description}
             canDelete={true} // Always true for the profile
             onDelete={() => handleDelete(review.id)} // Pass the delete handler
+            onNavigate={() => handleNavigate(review.id)} // Pass the navigate handler
           />
         ))
       ) : (
