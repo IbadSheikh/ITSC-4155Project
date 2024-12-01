@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import CreateReview from './CreateReview';
 
 const ReviewMap = () => {
-  const [searchParams] = useSearchParams(); // Hook to get query params
+  const [searchParams] = useSearchParams();
   const [reviews, setReviews] = useState([]);
   const [filteredReviews, setFilteredReviews] = useState([]);
   const [newMarkerPosition, setNewMarkerPosition] = useState(null);
-  const [selectedMarkerPosition, setSelectedMarkerPosition] = useState(null);
   const [error, setError] = useState('');
+  const mapRef = useRef(); // Ref for the map
 
-  const selectedRating = searchParams.get('rating'); // Extract 'rating' query param
-  const selectedReviewId = searchParams.get('reviewId'); // Extract 'reviewId' query param
+  const selectedRating = searchParams.get('rating');
+  const selectedReviewId = searchParams.get('reviewId');
 
   const defaultIcon = L.icon({
     iconUrl: 'https://unpkg.com/leaflet/dist/images/marker-icon.png',
@@ -86,17 +86,16 @@ const ReviewMap = () => {
   useEffect(() => {
     if (selectedReviewId) {
       const review = reviews.find((r) => String(r.id) === String(selectedReviewId));
-      if (review && review.lat && review.lng) {
-        setSelectedMarkerPosition([review.lat, review.lng]);
+      if (review && review.lat && review.lng && mapRef.current) {
+        const map = mapRef.current;
+        map.setView([review.lat, review.lng], 16, { animate: true }); // Pan and zoom to the marker
       }
     }
   }, [selectedReviewId, reviews]);
 
   const AddMarkerOnClick = () => {
-    useMapEvents({
-      click: (e) => {
-        setNewMarkerPosition(e.latlng);
-      },
+    useMap().on('click', (e) => {
+      setNewMarkerPosition(e.latlng);
     });
     return null;
   };
@@ -110,7 +109,12 @@ const ReviewMap = () => {
   return (
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
-      <MapContainer center={[35.3074, -80.7352]} zoom={15} style={{ height: 'calc(100vh - 50px)', width: '100%' }}>
+      <MapContainer
+        center={[35.3074, -80.7352]}
+        zoom={15}
+        style={{ height: 'calc(100vh - 50px)', width: '100%' }}
+        ref={mapRef} // Attach the map reference
+      >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <AddMarkerOnClick />
 
@@ -124,11 +128,11 @@ const ReviewMap = () => {
                 icon={getItemIcon(review.item)}
                 eventHandlers={{
                   click: () => {
-                    setSelectedMarkerPosition([review.lat, review.lng]);
+                    mapRef.current.setView([review.lat, review.lng], 16, { animate: true });
                   },
                 }}
               >
-                <Popup>
+                <Popup autoOpen={String(review.id) === String(selectedReviewId)}>
                   <strong>{review.item}</strong>
                   <br />
                   Rated {review.rating}/5 stars
@@ -149,12 +153,6 @@ const ReviewMap = () => {
                 onSuccess={() => handleReviewSubmit(newMarkerPosition)}
               />
             </Popup>
-          </Marker>
-        )}
-
-        {selectedMarkerPosition && (
-          <Marker position={selectedMarkerPosition} icon={defaultIcon}>
-            <Popup>Review Selected</Popup>
           </Marker>
         )}
       </MapContainer>
