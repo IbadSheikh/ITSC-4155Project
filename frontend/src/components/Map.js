@@ -11,6 +11,7 @@ const ReviewMap = () => {
   const [filteredReviews, setFilteredReviews] = useState([]);
   const [newMarkerPosition, setNewMarkerPosition] = useState(null);
   const [error, setError] = useState('');
+  const [userLocation, setUserLocation] = useState(null); // State to store the user's location
   const mapRef = useRef(); // Ref for the map
   const markerRefs = useRef({}); // Ref to store markers for programmatic access
 
@@ -21,6 +22,13 @@ const ReviewMap = () => {
     iconUrl: 'https://unpkg.com/leaflet/dist/images/marker-icon.png',
     iconSize: [25, 41],
     iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+  });
+
+  const userIcon = L.icon({
+    iconUrl: "/images/person.png",
+    iconSize: [40, 60],
+    iconAnchor: [20, 60],
     popupAnchor: [1, -34],
   });
 
@@ -84,21 +92,34 @@ const ReviewMap = () => {
     }
   }, [selectedRating, reviews]);
 
+  // Get user's current location when the component mounts
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+        },
+        (error) => {
+          console.error('Error getting user location:', error);
+          setError('Unable to retrieve your location.');
+        }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userLocation && mapRef.current) {
+      const map = mapRef.current;
+      map.setView([userLocation.lat, userLocation.lng], 16);
+    }
+  }, [userLocation]);
+
   useEffect(() => {
     if (selectedReviewId) {
       const review = reviews.find((r) => String(r.id) === String(selectedReviewId));
       if (review && review.lat && review.lng && mapRef.current) {
         const map = mapRef.current;
-  
-        // Wait until the map has been rendered and the marker is added to the map
-        map.once('moveend', () => {
-          if (markerRefs.current[review.id]) {
-            // Ensure the popup opens after the marker is rendered
-            markerRefs.current[review.id].openPopup();
-          }
-        });
-  
-        // Set the view to the location of the review
         map.setView([review.lat, review.lng], 16, { animate: true });
       }
     }
@@ -124,10 +145,16 @@ const ReviewMap = () => {
         center={[35.3074, -80.7352]}
         zoom={15}
         style={{ height: 'calc(100vh - 50px)', width: '100%' }}
-        ref={mapRef} // Attach the map reference
+        ref={mapRef}
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <AddMarkerOnClick />
+
+        {/* Add user location marker if available */}
+        {userLocation && (
+          <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
+          </Marker>
+        )}
 
         {filteredReviews.map(
           (review) =>
@@ -140,12 +167,9 @@ const ReviewMap = () => {
                 eventHandlers={{
                   click: () => {
                     mapRef.current.setView([review.lat, review.lng], 16, { animate: true });
-                    if (markerRefs.current[review.id]) {
-                      markerRefs.current[review.id].openPopup(); // Open the popup when clicked
-                    }
                   },
                 }}
-                ref={(el) => (markerRefs.current[review.id] = el)} // Store reference to each marker
+                ref={(el) => (markerRefs.current[review.id] = el)}
               >
                 <Popup>
                   <strong>{review.item}</strong>
@@ -176,4 +200,3 @@ const ReviewMap = () => {
 };
 
 export default ReviewMap;
-
