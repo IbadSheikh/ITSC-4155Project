@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Reviews Component matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="container mt-4"
+  >
+    <h2>
+      Reviews
+    </h2>
+    <div
+      data-testid="alert-danger"
+    >
+      Geolocation is not supported by this browser.
+    </div>
+    <ul />
+  </div>
+</DocumentFragment>
+`;
